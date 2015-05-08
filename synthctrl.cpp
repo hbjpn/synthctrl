@@ -48,13 +48,27 @@ int main(int argc, char *argv[]) {
 	unsigned char midimsg[128];
 	int len;
 		
-   	len = korg::zone(midimsg, 0, 'l', 2);
+   	len = korg::zone(midimsg, 0, 't', 127);
 	midiOut->send(midimsg, len);   
-  	len = generic::noteon(midimsg, 0, 60, 100);
+  			
+   	len = korg::zone(midimsg, 1, 'l', 126);
+	midiOut->send(midimsg, len);   
+  	
+   	len = korg::zone(midimsg, 2, 'l', 126);
+	midiOut->send(midimsg, len);   
+   	
+   	len = korg::zone(midimsg, 3, 'l', 126);
+	midiOut->send(midimsg, len);   
+  
+/*
+	len = korg::solo(midimsg, 0, 1);
+	midiOut->send(midimsg, len);   
+ 
+	len = generic::noteon(midimsg, 0, 60, 100);
 	midiOut->send(midimsg, len);	
 	len = generic::noteoff(midimsg, 0, 60, 0);
 	midiOut->send(midimsg, len);
-
+	*/
 	delete midiOut;
 	return 0;          // so might be a good idea to erase it after closing.
 }
