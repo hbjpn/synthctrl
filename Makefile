@@ -1,8 +1,21 @@
-synthctrl: synthctrl.o
-	g++ $^ -lasound -o $@
+PROG := synthctrl
+SRCS := synthctrl.cpp
+OBJS := $(SRCS:%.cpp=%.o)
+DEPS := $(SRCS:%.cpp=%.d)
 
-.cpp.o:
-	g++ -c -lasound $^
+CC := g++
+
+all: $(PROG)
+
+-include $(DEPS)
+
+$(PROG): $(OBJS)
+	$(CC) -lasound -o $@ $^
+
+%.o: %.cpp
+	$(CC) -c -MMD -MP $<
 
 clean:
-	rm -f *.o synthctrl
+	rm -f $(PROG) $(OBJS) $(DEPS)
+
+
