@@ -39,23 +39,36 @@ public:
 	} 
 };
 
-void fromjson(picojson::value::object& obj)
-{
-	
-}
 
+typedef int (*midigen)(unsigned char*, std::map<std::string, std::string>&);
 
 int main(int argc, char *argv[]) {
 	const char* portname = "hw:1,0,0";  // see alsarawportlist.c example program
-	if ((argc > 1) && (strncmp("hw:", argv[1], 3) == 0)) {
+	/*if ((argc > 1) && (strncmp("hw:", argv[1], 3) == 0)) {
 		portname = argv[1];
-	}
+	}*/
+
+	std::map<std::string, midigen> mgm;
+	mgm["korg::zone"] = korg::zone;
+	mgm["korg::tone"] = korg::tone;
+	mgm["korg::solo"] = korg::solo;
+	mgm["korg::mute"] = korg::mute;
 
 	MIDIOut* midiOut = new MIDIOut(portname);
 
 	unsigned char midimsg[128];
 	int len;
-		
+
+	config cfg;
+	loadConfig(argv[1], cfg);
+
+	for(int i = 0; i < cfg.size(); ++i){
+		std::string& type = cfg[i]["type"];
+		len = mgm[type](midimsg, cfg[i]);
+		midiOut->send(midimsg, len);
+	}  
+
+/*		
    	len = korg::zone(midimsg, 0, 't', 127);
 	midiOut->send(midimsg, len);   
   			
@@ -68,7 +81,6 @@ int main(int argc, char *argv[]) {
    	len = korg::zone(midimsg, 3, 'l', 126);
 	midiOut->send(midimsg, len);   
   
-/*
 	len = korg::solo(midimsg, 0, 1);
 	midiOut->send(midimsg, len);   
  

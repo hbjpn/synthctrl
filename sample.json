@@ -1,14 +1,14 @@
 [
 	{
 		"type":"korg::tone",
-		"bank_corse":0,
-		"bank_fine" :3,
-		"program"   :32
+		"bank_corse":"0",
+		"bank_fine" :"3",
+		"program"   :"32"
 	},
 	{
 		"type":"korg::zone",
-		"track":0,
+		"track":"0",
 		"lu":"u",
-		"position":127
+		"position":"127"
 	}
 ]

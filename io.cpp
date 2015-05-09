@@ -1,4 +1,5 @@
 #include "picojson.h"
+#include "io.h"
 #include <iostream>
 #include <fstream>
 
@@ -23,6 +24,40 @@ bool loadJSON(const char* fn, picojson::value& v)
 	}
 	delete [] buf; 
 }
+
+void tomap(const picojson::value::object& obj, std::map<std::string, std::string>& m)
+{
+	picojson::value::object::const_iterator c_it = obj.begin();
+	for(; c_it != obj.end(); ++c_it){
+		const std::string& key = c_it->first;
+		const picojson::value& v = c_it->second;
+		if(!v.is<std::string>()){
+			continue;
+		}
+		m[key] = v.get<std::string>();
+	}
+}
+
+void plainfy(picojson::value& v, config& a)
+{
+	picojson::value::array& arr = v.get<picojson::array>();
+	picojson::value::array::const_iterator c_it = arr.begin();
+	for(; c_it != arr.end(); ++c_it){
+		std::map<std::string, std::string> m;
+		tomap(c_it->get<picojson::object>(), m);
+		a.push_back(m);
+	}
+}
+
+void loadConfig(const char* fn, config& cfg)
+{
+	picojson::value v;
+	loadJSON(fn, v);
+	plainfy(v, cfg);
+}
+
+
+/*
 /*
 int main(int argc, char** argv)
 {
