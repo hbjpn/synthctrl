@@ -1,5 +1,5 @@
 PROG := synthctrl
-SRCS := synthctrl.cpp
+SRCS := synthctrl.cpp io.cpp
 OBJS := $(SRCS:%.cpp=%.o)
 DEPS := $(SRCS:%.cpp=%.d)
 
@@ -13,7 +13,7 @@ $(PROG): $(OBJS)
 	$(CC) -lasound -o $@ $^
 
 %.o: %.cpp
-	$(CC) -c -MMD -MP $<
+	$(CC) -c -MMD -MP $< -I picojson
 
 clean:
 	rm -f $(PROG) $(OBJS) $(DEPS)

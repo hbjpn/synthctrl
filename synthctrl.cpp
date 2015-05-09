@@ -1,8 +1,11 @@
 #include <alsa/asoundlib.h>     /* Interface to the ALSA system */
 #include <unistd.h>             /* for sleep() function */
+#include "picojson.h"
 
 #include "generic.h"
 #include "korg.h"
+
+#include "io.h"
 
 // function declarations:
 void errormessage(const char *format, ...);
@@ -35,6 +38,11 @@ public:
 		_midiout = NULL;    // snd_rawmidi_close() does not clear invalid pointer,
 	} 
 };
+
+void fromjson(picojson::value::object& obj)
+{
+	
+}
 
 
 int main(int argc, char *argv[]) {
