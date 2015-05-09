@@ -39,6 +39,13 @@ public:
 	} 
 };
 
+void dump(unsigned char* buf, int len)
+{
+	for(int i = 0; i < len; ++i){
+		fprintf(stderr, "0x%02x ", buf[i]);
+	}
+	fprintf(stderr, "\n");
+}
 
 typedef int (*midigen)(unsigned char*, std::map<std::string, std::string>&);
 
@@ -49,6 +56,8 @@ int main(int argc, char *argv[]) {
 	}*/
 
 	std::map<std::string, midigen> mgm;
+	mgm["noteon"]     = generic::noteon;
+	mgm["noteoff"]    = generic::noteoff;
 	mgm["korg::zone"] = korg::zone;
 	mgm["korg::tone"] = korg::tone;
 	mgm["korg::solo"] = korg::solo;
@@ -65,6 +74,7 @@ int main(int argc, char *argv[]) {
 	for(int i = 0; i < cfg.size(); ++i){
 		std::string& type = cfg[i]["type"];
 		len = mgm[type](midimsg, cfg[i]);
+		dump(midimsg, len);
 		midiOut->send(midimsg, len);
 	}  
 

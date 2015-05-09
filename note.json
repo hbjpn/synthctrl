@@ -1,0 +1,14 @@
+[
+	{
+		"type":"noteon",
+		"channel":"0",
+		"note":"64",
+		"velocity":"100"
+	},
+	{
+		"type":"noteon",
+		"channel":"1",
+		"note":"68",
+		"velocity":"100"
+	}
+]

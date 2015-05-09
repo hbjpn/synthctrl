@@ -1,5 +1,11 @@
 [
 	{
+		"type":"noteon",
+		"channel":"1",
+		"note":"64",
+		"velocity":"100"
+	},
+	{
 		"type":"korg::tone",
 		"bank_corse":"0",
 		"bank_fine" :"3",
