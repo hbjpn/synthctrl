@@ -22,7 +22,8 @@ bool loadJSON(const char* fn, picojson::value& v)
 		std::cerr << err << std::endl;
 		return false;
 	}
-	delete [] buf; 
+	delete [] buf;
+	return true; 
 }
 
 void tomap(const picojson::value::object& obj, std::map<std::string, std::string>& m)
@@ -57,7 +58,6 @@ void loadConfig(const char* fn, config& cfg)
 }
 
 
-/*
 /*
 int main(int argc, char** argv)
 {

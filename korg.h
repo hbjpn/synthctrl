@@ -73,12 +73,4 @@ inline int tone(unsigned char* _buf, std::map<std::string, std::string>& argv)
 	return tone(_buf, AsByte(argv["bank_corse"]), AsByte(argv["bank_fine"]), AsByte(argv["program"]));
 }
 
-
-inline int pgmchange(snd_seq_event_t* ev,
-	unsigned char ch,
-	unsigned char program){
-	snd_seq_ev_set_pgmchange(ev, ch, program);
-	return 0;
-}
-
 }

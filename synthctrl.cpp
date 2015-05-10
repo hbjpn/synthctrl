@@ -1,5 +1,8 @@
-#include <alsa/asoundlib.h>     /* Interface to the ALSA system */
+//#include <alsa/asoundlib.h>     /* Interface to the ALSA system */
+
 #include <unistd.h>             /* for sleep() function */
+
+#include "rtmidi.h"
 #include "picojson.h"
 
 #include "generic.h"
@@ -11,6 +14,7 @@
 void errormessage(const char *format, ...);
 
 ///////////////////////////////////////////////////////////////////////////
+/*
 class MIDIOut{
 	snd_rawmidi_t* _midiout;
 public:
@@ -38,6 +42,7 @@ public:
 		_midiout = NULL;    // snd_rawmidi_close() does not clear invalid pointer,
 	} 
 };
+*/
 
 void dump(unsigned char* buf, int len)
 {
@@ -63,8 +68,11 @@ int main(int argc, char *argv[]) {
 	mgm["korg::solo"] = korg::solo;
 	mgm["korg::mute"] = korg::mute;
 
-	MIDIOut* midiOut = new MIDIOut(portname);
-
+	RtMidiOut* midiOut = new RtMidiOut();
+	unsigned int nports = midiOut->getPortCount();
+	std::cerr << nports << " MIDI ports available." << std::endl;
+	midiOut->openPort(0);
+	
 	unsigned char midimsg[128];
 	int len;
 
@@ -75,7 +83,8 @@ int main(int argc, char *argv[]) {
 		std::string& type = cfg[i]["type"];
 		len = mgm[type](midimsg, cfg[i]);
 		dump(midimsg, len);
-		midiOut->send(midimsg, len);
+		std::vector<unsigned char> msg(&midimsg[0], &midimsg[len]);
+		midiOut->sendMessage(&msg);
 	}  
 
 /*		
