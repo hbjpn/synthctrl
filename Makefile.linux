@@ -1,9 +1,10 @@
 PROG := synthctrl
-SRCS := synthctrl.cpp io.cpp
+SRCS := synthctrl.cpp io.cpp raspi_gpio.cpp
 OBJS := $(SRCS:%.cpp=%.o)
 DEPS := $(SRCS:%.cpp=%.d)
 INCL := -I picojson -I rtmidi-2.1.0
-LIBS := -L rtmidi-2.1.0 -lrtmidi
+LIBS := -L rtmidi-2.1.0 -lrtmidi -L wiringPi/wiringPi -lwiringPi -lpthread
+OPTS := -DLINUX
 CC := g++
 
 all: $(PROG)
@@ -14,7 +15,7 @@ $(PROG): $(OBJS)
 	$(CC) $(LIBS) -o $@ $^
 
 %.o: %.cpp
-	$(CC) -c -MMD -MP $< $(INCL) 
+	$(CC) -c -MMD -MP $< $(INCL) $(OPTS)
 
 clean:
 	rm -f $(PROG) $(OBJS) $(DEPS)
