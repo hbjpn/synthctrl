@@ -2,7 +2,7 @@
 
 #include <unistd.h>             /* for sleep() function */
 
-#include "rtmidi.h"
+#include "RtMidi.h"
 #include "picojson.h"
 
 #include "generic.h"
@@ -10,40 +10,7 @@
 
 #include "io.h"
 
-// function declarations:
-void errormessage(const char *format, ...);
-
 ///////////////////////////////////////////////////////////////////////////
-/*
-class MIDIOut{
-	snd_rawmidi_t* _midiout;
-public:
-	MIDIOut(const char* portname){
-		int status;
-		int mode = SND_RAWMIDI_SYNC;
-		_midiout = NULL;
-   		if ((status = snd_rawmidi_open(NULL, &_midiout, portname, mode)) < 0) {
-			errormessage("Problem opening MIDI output: %s", snd_strerror(status));
-      			exit(1);
-   		}
-	}
-
-	void send(const unsigned char* buf, int len){
-		int status;
-		if ((status = snd_rawmidi_write(_midiout, buf, len)) < 0) {
-			errormessage("Problem writing to MIDI output: %s", snd_strerror(status));
-			exit(1);
-		}
-	}
-
-	virtual ~MIDIOut()
-	{
-		snd_rawmidi_close(_midiout);
-		_midiout = NULL;    // snd_rawmidi_close() does not clear invalid pointer,
-	} 
-};
-*/
-
 void dump(unsigned char* buf, int len)
 {
 	for(int i = 0; i < len; ++i){
@@ -113,18 +80,4 @@ int main(int argc, char *argv[]) {
 }
 
 ///////////////////////////////////////////////////////////////////////////
-
-//////////////////////////////
-//
-// error -- Print an error message.
-//
-
-void errormessage(const char *format, ...) {
-   va_list ap;
-   va_start(ap, format);
-   vfprintf(stderr, format, ap);
-   va_end(ap);
-   putc('\n', stderr);
-}
-
 
