@@ -7,8 +7,15 @@
 	},
 	{
 		"type":"noteon",
-		"channel":"1",
+		"channel":"0",
 		"note":"68",
 		"velocity":"100"
+	},
+	{
+		"type":"noteon",
+		"channel":"0",
+		"note":"71",
+		"velocity":"100"
 	}
+
 ]

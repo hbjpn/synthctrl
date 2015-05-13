@@ -17,6 +17,9 @@
 #include "raspi_gpio.h"
 #endif
 
+// Global variables
+RtMidiOut* midiOut = NULL;
+
 ///////////////////////////////////////////////////////////////////////////
 void dump(unsigned char* buf, int len)
 {
@@ -72,20 +75,54 @@ public:
 	}
 };
 
+class MIDICtrlSet
+{
+	std::vector< std::vector<unsigned char> > _midiMsgs;
+public:
+	MIDICtrlSet(){};
+	void add(const std::vector<unsigned char>& msg){
+		_midiMsgs.push_back(msg);
+	}
+
+	void add(const unsigned char* msg, int len){
+		std::vector<unsigned char> _tmp( &msg[0], &msg[len] );
+		add(_tmp);
+	}
+
+	void run(RtMidiOut* midiOut)
+	{
+		for(int i = 0; i < _midiMsgs.size(); ++i){
+			midiOut->sendMessage(&_midiMsgs[i]);
+			dump(&_midiMsgs[i][0], _midiMsgs[i].size());
+		}
+	}
+};
+
 EventQueue* evt_queue = NULL;
+MIDICtrlSet mcs;
 
 typedef int (*midigen)(unsigned char*, std::map<std::string, std::string>&);
 void* event_loop(void* arg)
 {
 	evt_queue = new EventQueue();
-	while(1){
+	bool loop_continue = true;
+	while(loop_continue){
 		Event evt = evt_queue->pop();
 
 		/* process event */
 		printf("Event triggered : %d\n", evt.type);
 
-		if(evt.type == EVT_END_LOOP)
+		switch(evt.type){
+		case EVT_GPIO0_TRIGERRED:
+		case EVT_GPIO1_TRIGERRED:
+			mcs.run(midiOut);
 			break;
+		case EVT_END_LOOP:
+			loop_continue = false;
+			break;
+		default:
+			break;
+		}
 	}
 	fprintf(stderr, "End event loop thread\n");
 	delete evt_queue;
@@ -150,10 +187,6 @@ void start()
 }
 
 int main(int argc, char *argv[]) {
-	const char* portname = "hw:1,0,0";  // see alsarawportlist.c example program
-	/*if ((argc > 1) && (strncmp("hw:", argv[1], 3) == 0)) {
-		portname = argv[1];
-	}*/
 
 	std::map<std::string, midigen> mgm;
 	mgm["noteon"]     = generic::noteon;
@@ -163,10 +196,12 @@ int main(int argc, char *argv[]) {
 	mgm["korg::solo"] = korg::solo;
 	mgm["korg::mute"] = korg::mute;
 
-	RtMidiOut* midiOut = new RtMidiOut();
+	midiOut = new RtMidiOut();
 	unsigned int nports = midiOut->getPortCount();
-	std::cerr << nports << " MIDI ports available." << std::endl;
-	midiOut->openPort(0);
+	std::cerr << nports << " MIDI ports available. Choose number : " << std::endl;
+	int port = 0;
+	std::cin >> port;
+	midiOut->openPort(port);
 	
 	unsigned char midimsg[128];
 	int len;
@@ -174,19 +209,20 @@ int main(int argc, char *argv[]) {
 	config cfg;
 	loadConfig(argv[1], cfg);
 
+	for(int i = 0; i < cfg.size(); ++i){
+		std::string& type = cfg[i]["type"];
+		len = mgm[type](midimsg, cfg[i]);
+		dump(midimsg, len);
+		mcs.add(midimsg, len);
+	}  
+	
 #ifdef LINUX
 	RaspiGPIO* gpio = new RaspiGPIO();
 	gpio->setCallback(0, gpio_port0_triggered);
 	gpio->setCallback(1, gpio_port1_triggered);
 	start();
 #else
-	for(int i = 0; i < cfg.size(); ++i){
-		std::string& type = cfg[i]["type"];
-		len = mgm[type](midimsg, cfg[i]);
-		dump(midimsg, len);
-		std::vector<unsigned char> msg(&midimsg[0], &midimsg[len]);
-		midiOut->sendMessage(&msg);
-	}  
+	midiCtrlSet.run(midiOut);
 #endif
 
 #ifdef LINUX
