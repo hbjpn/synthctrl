@@ -1,8 +1,283 @@
-<html>
+<!DOCTYPE html>
+<html ng-app="synthctrl">
 <head>
-</head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="cache-control" content="no-cache" />
+<meta http-equiv="expires" content="0" />
+<title>SynthCtrl</title>
+<script type="text/javascript"
+src="/js/jquery-1.11.0.min.js"></script>
+<link rel="stylesheet"
+href="/css/bootstrap.min.css">
+<link rel="stylesheet"
+href="/css/bootstrap-theme.min.css">
+<link rel="stylesheet" href="/css/default.css">
+<script src="/js/angular.min.js"></script>
+<script src="/js/bootstrap.min.js"></script>
+<script src="/js/client.js"></script>
 <body>
-<h1>Welcome to SynthCtrl v1.0</h1>
-</body>
-</html>
+<nav class="navbar navbar-default" role="navigation">
+<div class="container-fluid">
+<!-- Brand and toggle get grouped for better mobile display -->
+<div class="navbar-header">
+<button type="button" class="navbar-toggle" data-toggle="collapse"
+data-target="#bs-example-navbar-collapse-1">
+<span class="sr-only">Toggle navigation</span> <span
+class="icon-bar"></span> <span class="icon-bar"></span> <span
+class="icon-bar"></span>
+</button>
+<a class="navbar-brand" href="#">SynthCtrl</a>
+</div>
+<!-- Collect the nav links, forms, and other content for toggling -->
+<div class="collapse navbar-collapse"
+id="bs-example-navbar-collapse-1">
+<ul class="nav navbar-nav navbar-right">
+<li><a href="about.html" target="_blank">About</a></li>
+</ul>
+</div>
+<!-- /.navbar-collapse -->
+</div>
+<!-- /.container-fluid -->
+</nav>
+<section class="container-fluid">
+<div class="row">
+<div class="col-md-3 col-sm-3" id="files">
+<div class="row">
+<div class="col-md-12 col-sm-12" >
+<div class="input-group">
+<input type="text" class="form-control" id="search_word">
+<span class="input-group-btn">
+<button class="btn btn-default" type="button"
+onclick="load_remote_files(0)">
+<span class="glyphicon glyphicon-search"></span>
+</button>
+</span>
+</div>
+<!-- /input-group -->
+</div>
+</div>
+<div class="row">
+<div class="col-md-12 col-sm-12">
+<div role="tabpanel">
+<!-- Nav tabs -->
+<ul class="nav nav-tabs" role="tablist" id="maintab">
+<li role="presentation" class="active"><a
+href="#scorespanel" aria-controls="scorespanel" role="tab"
+data-toggle="tab">Scores</a></li>
+<li role="presentation"><a href="#setlistspanel"
+aria-controls="setlistspanel" role="tab" data-toggle="tab">Set
+Lists</a></li>
+</ul>
+<!-- Tab panes -->
+<div class="tab-content">
+<div role="tabpanel" class="tab-pane active" id="scorespanel">
+<div style="text-align: center; padding:5px 0px;">
+<a href="#" id="sc_prev" class="mypager" style="float:left;"><span
+aria-hidden="true">&larr;</span>Previous</a>
+<a href="#" id="sc_next"
+class="mypager" style="float:right;">Next<span aria-hidden="true">&rarr;</span></a>
+</div>
+<table class="table table-condensed" ng-controller="FileList">
+<thead>
+<tr>
+<th></th>
+<th>Name</th>
+</tr>
+</thead>
+<tbody id="files_table">
+<tr ng-repeat="file in files"><td>A</td><td>{{file}}</td></tr>
+</tbody>
+</table>
+</div>
+<div role="tabpanel" class="tab-pane" id="setlistspanel">
+<div style="text-align: center; padding:5px 0px;">
+<a href="#" id="sl_prev" class="mypager" style="float:left;"><span
+aria-hidden="true">&larr;</span>Previous</a>
+<a href="#" id="sl_next"
+class="mypager" style="float:right;">Next<span aria-hidden="true">&rarr;</span></a>
+</div>
+<table class="table table-condensed">
+<thead>
+<tr>
+<th></th>
+<th>Name</th>
+</tr>
+</thead>
+<tbody id="setlists_table">
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="col-md-9 col-sm-9">
+	<div class="row">
+		<div class="col-md-10 col-sm-10" id="codenav">
+			<div class="btn-toolbar" role="toolbar">
+				<div class="btn-group">
+					<button type="button" class="btn btn-default" aria-label="New"
+					data-toggle="dropdown" title="New sheet" onclick="newscore();">
+						<span class="glyphicon glyphicon-file" aria-hidden="true"></span>
+					</button>
+					<button type="button" class="btn btn-default"
+					aria-label="New set list" data-toggle="tooltip"
+					title="New set list" onclick="newsetlist();">
+						<span class="glyphicon glyphicon-th-list" aria-hidden="true"></span>
+					</button>
+					<button type="button" class="btn btn-default" aria-label="Save"
+					data-toggle="tooltip" title="Save sheet" onclick="save_online();">
+						<span class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></span>
+					</button>
 
+					<button type="button" class="btn btn-default" aria-label="Remove" data-toggle="tooltip" title="Remove sheet" onclick="remove_score();">
+						<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+					</button>
+
+					<button type="button" class="btn btn-default" aria-label="Run" data-toggle="tooltip" title="Run configuration" onclick="run();">
+						<span class="glyphicon glyphicon-play" aria-hidden="true"></span>
+					</button>
+
+
+				</div>
+			</div>
+		</div>
+		<div class="col-md-2 col-sm-2">
+			<div id="context_message" class="alert-success">aa</div>
+		</div>
+	</div>
+<div class="row">
+<div class="col-md-12 col-sm-12" id="codearea">
+<div class="row">
+<div class="col-md-12 col-sm-12">
+<input type="text" class="form-control" value="A.json"/>
+</div>
+</div>
+
+
+<div class="row">
+<div class="cold-md-12 col-sm-12">
+<textarea id="score_code" class="form-control"
+style="height: 600px; border-radius: 0px;">
+[
+	{
+		"type":"noteon",
+		"note":"64",
+		"velocity":"100"
+	}
+]
+</textarea>
+</div>
+</div>
+</div>
+<div class="col-md-12 col-sm-12"
+style="padding-right:20px; display: none;"
+id="setlistarea">
+<form role="form">
+<div class="form-group">
+<label>Set list name</label> <input
+type="email" class="form-control" id="setlist_name"
+placeholder="Set list name">
+</div>
+<div class="form-group">
+<label>Scores (Drag and Drop from scores list)</label>
+<div id="setlist_scores" style="list-style-type: none; padding: 10px; border-style:solid; border-width:1px; border-color:#ccc; border-radius:5px; min-height:500px;">
+</div>
+</div>
+</form>
+</div>
+</div>
+</div>
+</div>
+<!-- <div class="row">
+<div class="col-md-12 col-sm-12 text-center">
+<div id="canvas"></div>
+<div id="invisible_view"></div>
+</div>
+</div> -->
+</section>
+<!-- Dialogs -->
+<div class="modal fade" id="save_as_score_modal" tabindex="-1"
+role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+<div class="modal-dialog">
+<div class="modal-content">
+<div class="modal-header">
+<button type="button" class="close" data-dismiss="modal"
+aria-hidden="true">&times;</button>
+<h4 class="modal-title" id="myModalLabel">Save Score</h4>
+</div>
+<div class="modal-body">
+<form role="form">
+<div class="form-group">
+<label for="save_name">Score Name</label> <input type="text"
+class="form-control" id="save_name"
+placeholder="Input file name" />
+</div>
+</form>
+</div>
+<div class="modal-footer">
+<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+<button type="button" class="btn btn-primary"
+onclick="close_save_modal();">Save</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Dialogs -->
+<div class="modal fade" id="share_modal" tabindex="-1" role="dialog"
+aria-labelledby="myModalLabel" aria-hidden="true">
+<div class="modal-dialog">
+<div class="modal-content">
+<div class="modal-header">
+<button type="button" class="close" data-dismiss="modal"
+aria-hidden="true">&times;</button>
+<h4 class="modal-title" id="myModalLabel">Share sheet</h4>
+</div>
+<div class="modal-body">
+<form role="form">
+<div class="control-group">
+<label class="control-label">Share level : </label>
+<div clas="controls">
+<div class="radio">
+<label> <input id="radio_btn_share_private" name="sl"
+type="radio" value="PRIVATE" checked /> Private : You only
+can read(and write) this score.
+</label>
+</div>
+<div class="radio">
+<label> <input id="radio_btn_share_public" name="sl"
+type="radio" value="PUBLIC" /> Public : Any user can search
+and read this score.
+</label>
+</div>
+<div class="radio">
+<label> <input id="radio_btn_share_semipublic"
+name="sl" type="radio" value="SEMIPUBLIC" /> SemiPublic : Any
+user who knows URL can read this score.
+</label>
+</div>
+</div>
+</div>
+<div class="control-group">
+<label class="control-label">Share URL : </label>
+<div class="controls">
+<input id="share_url" size="60" type="text" />
+</div>
+</div>
+</form>
+</div>
+<div class="modal-footer">
+<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+<button type="button" class="btn btn-primary"
+onclick="on_ok_share_score();">OK</button>
+</div>
+</div>
+</div>
+</div>
+<div id="canvas"></div>
+<div id="invisible_view" style="opacity: 0;"></div>
+</BODY>
+</HTML>
