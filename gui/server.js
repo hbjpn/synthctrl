@@ -17,7 +17,7 @@ var sessionMiddleware = expressSession({
 
 
 var port = argv.port || 8081;
-
+var datadir = argv.datadir || "../data/";
 // Authentication for Facebook
 
 console.log(argv);
@@ -68,6 +68,9 @@ console.log("Listen on port " + port);
 rooms = {};
 contentList = {};
 
+
+var fs = require("fs");
+
 function GUID(){
 	var streamId = "";
 	for(var i = 0; i < 4; ++i){
@@ -79,7 +82,19 @@ function GUID(){
 
 RPCBody = {
 	'list' : function(socket, data, res){
-		res.send({error:false, files:["hoge.json","baba.json","bubuka.json"]}); 
+	
+		fs.readdir(datadir, function(err, files){
+    			if (err) throw err;
+			var fileList = [];
+			files.filter(function(file){
+				var path = datadir + "/" + file;
+				return fs.statSync(path).isFile() && /.*\.json$/.test(file); //絞り込み
+			}).forEach(function (file) {
+				fileList.push(file);
+			});
+			console.log(fileList);
+			res.send({error:false, files:fileList}); 
+		});
 	},
 	'setprof' : function(socket, data, res){
 		console.log('setprof : ' + JSON.stringify(data));

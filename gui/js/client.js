@@ -15,7 +15,8 @@ function run()
 
 function RPCManager(wsurl)
 {
-	this.srv_socket = io.conenct(wsurl);
+	this.srv_socket = io.connect(wsurl);
+	this.SocketIOEvt = {};
 	this.RPCS = {};
 	this.RPCID = 0;	
 }
@@ -47,10 +48,10 @@ RPCManager.prototype.on = function(evt, callback, options)
 };
 
 $("document").ready(function(){
-	var man = new RPCManager("129.168.11.7:8081");
+	var man = new RPCManager("192.168.11.7:8081");
 
 	man.RPC('list', {}, function(res){
-		fileListCtrl.files = res;
+		fileListCtrl.files = res["files"];
 		fileListCtrl.$apply();		
 	});	
 });
