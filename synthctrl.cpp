@@ -29,52 +29,6 @@ void dump(unsigned char* buf, int len)
 	fprintf(stderr, "\n");
 }
 
-enum EventType{
-	EVT_GPIO0_TRIGERRED = 0,
-	EVT_GPIO1_TRIGERRED,
-	EVT_END_LOOP
-};
-
-struct Event{
-	EventType type;
-};
-
-class EventQueue
-{
-	std::queue<Event> evt_queue;
-	pthread_mutex_t evt_loop_mutex;
-	pthread_cond_t evt_loop_cond;
-
-
-public:
-	EventQueue(){
-		pthread_mutex_init(&evt_loop_mutex, NULL);
-		pthread_cond_init(&evt_loop_cond, NULL);
-	};
-
-	virtual ~EventQueue(){
-		pthread_mutex_destroy(&evt_loop_mutex);
-		pthread_cond_destroy(&evt_loop_cond);
-	}
-	
-	void push(Event evt){
-		pthread_mutex_lock(&evt_loop_mutex);
-		evt_queue.push(evt);
-		pthread_cond_signal(&evt_loop_cond);
-		pthread_mutex_unlock(&evt_loop_mutex);
-	}
-	Event pop(){
-		pthread_mutex_lock(&evt_loop_mutex);
-		while(evt_queue.empty()){
-			pthread_cond_wait(&evt_loop_cond, &evt_loop_mutex);
-		}
-		Event evt = evt_queue.front();
-		evt_queue.pop();
-		pthread_mutex_unlock(&evt_loop_mutex);
-		return evt;
-	}
-};
-
 class MIDICtrlSet
 {
 	std::vector< std::vector<unsigned char> > _midiMsgs;

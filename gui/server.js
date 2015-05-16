@@ -1,4 +1,5 @@
 var argv = require('optimist').argv;
+var cp = require('child_process');
 var express = require('express');
 var app = express();
 var http = require('http').Server(app);
@@ -41,22 +42,6 @@ function remove(array, val)
 	}
 }
 
-function leaveroom(socket)
-{
-	if(socket.custom.room){
-		socket.broadcast.to(socket.custom.room).emit('peer_left',{peer:socket.custom.peer_id});
-		var room_id = socket.custom.room;
-			socket.leave(room_id);
-		mongo.db.collection('rooms').update({room_id:room_id},{$pull: {"member" : socket.custom.peer_id}}, function(err,item){
-			
-		});
-		//remove(rooms[room_id].member, socket.custom.peer_id);
-			//if(rooms[room_id].member.length == 0){
-		//	setDeleteTimer(room_id);
-		//}
-	}
-}
-
 app.use(express.static(__dirname));
 app.get("/test", function(req,res){
 	res.send(req.user);
@@ -71,6 +56,38 @@ contentList = {};
 
 var fs = require("fs");
 
+
+
+var net = require('net');
+
+var HOST = '127.0.0.1';
+var PORT = 6969;
+
+var sockclient = new net.Socket();
+sockclient.connect(PORT, HOST, function() {
+
+    console.log('CONNECTED TO: ' + HOST + ':' + PORT);
+    // Write a message to the socket as soon as the client is connected, the server will receive it as message from the client 
+    //client.write('I am Chuck Norris!');
+
+});
+
+// Add a 'data' event handler for the client socket
+// data is what the server sent to this socket
+sockclient.on('data', function(data) {
+    
+    console.log('DATA: ' + data);
+    // Close the client socket completely
+    sockclient.destroy();
+    
+});
+
+// Add a 'close' event handler for the client socket
+sockclient.on('close', function() {
+    console.log('Connection closed');
+});
+
+
 function GUID(){
 	var streamId = "";
 	for(var i = 0; i < 4; ++i){
@@ -82,20 +99,49 @@ function GUID(){
 
 RPCBody = {
 	'list' : function(socket, data, res){
-	
+
 		fs.readdir(datadir, function(err, files){
-    			if (err) throw err;
-			var fileList = [];
-			files.filter(function(file){
-				var path = datadir + "/" + file;
-				return fs.statSync(path).isFile() && /.*\.json$/.test(file); //絞り込み
-			}).forEach(function (file) {
-				fileList.push(file);
-			});
-			console.log(fileList);
-			res.send({error:false, files:fileList}); 
-		});
+				if (err) throw err;
+				var fileList = [];
+				files.filter(function(file){
+					var path = datadir + "/" + file;
+					return fs.statSync(path).isFile() && /.*\.json$/.test(file); //絞り込み
+					}).forEach(function (file) {
+						fileList.push(file);
+						});
+				console.log(fileList);
+				res.send({error:false, files:fileList}); 
+				});
 	},
+	'load' : function(socket, data, res){
+
+		fs.readFile(datadir+"/"+data, "utf8", function(err, text){
+				if (err) throw err;
+				res.send({error:false, name:data, content:text}); 
+				});
+	},
+	'save' : function(socket, data, res){
+
+		fs.writeFile(datadir+"/"+data.name, data.content, function(err){
+				if (err) res.send({error:true,msg:err});
+				else res.send({error:false});
+				});
+
+	},
+	'deploy' : function(socket, data, res){
+		console.log("kitaaa");
+		//res.send({error:false, msg:"hoge"});
+		//return;
+		cp.exec('../synthctrl '+ datadir+"/"+data.name,  function(err, stdout, stderr){
+		//cp.exec('ls',  function(err, stdout, stderr){
+			console.log(err);
+			console.log(stdout);
+			console.log(stderr);
+			if(err) res.send({error:true, msg:err});
+			else res.send({error:false, stdout:stdout, stderr:stderr});
+		});	
+	},
+
 	'setprof' : function(socket, data, res){
 		console.log('setprof : ' + JSON.stringify(data));
 		var user_id = socket.request.session.passport.user;

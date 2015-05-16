@@ -88,7 +88,7 @@ class="mypager" style="float:right;">Next<span aria-hidden="true">&rarr;</span><
 </tr>
 </thead>
 <tbody id="files_table">
-<tr ng-repeat="file in files"><td>A</td><td>{{file}}</td></tr>
+<tr ng-repeat="file in files"><td>A</td><td><a href="#" ng-click="load($index);">{{file}}</a></td></tr>
 </tbody>
 </table>
 </div>
@@ -154,7 +154,7 @@ class="mypager" style="float:right;">Next<span aria-hidden="true">&rarr;</span><
 <div class="col-md-12 col-sm-12" id="codearea">
 <div class="row">
 <div class="col-md-12 col-sm-12">
-<input type="text" class="form-control" value="A.json"/>
+<input type="text" id="file_name" class="form-control" value="A.json"/>
 </div>
 </div>
 

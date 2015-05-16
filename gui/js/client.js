@@ -3,13 +3,32 @@ var fileListCtrl = null;
 app.controller('FileList', function($scope){
 	$scope.files = ["hoge.json","fuga.json", "poko.json"];	
 	console.log($scope.files);
+	
+	$scope.load = function(index){
+		var fn = $scope.files[index];
+		man.RPC("load", fn, function(res){
+			$("#file_name").val(res.name);
+			$("#score_code").val(res.content);	
+		});
+	}
 	fileListCtrl = $scope;
 });
 
 var man = null;
 
+function save_online()
+{
+	man.RPC("save", {name:$("#file_name").val(), content:$("#score_code").val()}, function(res){
+		console.log(res);	
+	});
+}
+
 function run()
 {
+	man.RPC("deploy", {name:$("#file_name").val()}, function(res){
+		console.log(res);	
+	});
+
 	alert("run");
 }
 
@@ -48,7 +67,7 @@ RPCManager.prototype.on = function(evt, callback, options)
 };
 
 $("document").ready(function(){
-	var man = new RPCManager("192.168.11.7:8081");
+	man = new RPCManager("192.168.11.7:8081");
 
 	man.RPC('list', {}, function(res){
 		fileListCtrl.files = res["files"];
