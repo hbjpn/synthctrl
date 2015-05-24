@@ -59,34 +59,16 @@ var fs = require("fs");
 
 
 var net = require('net');
+var dgram = require('dgram');
+var ENGINE_HOST = '127.0.0.1';
+var ENGINE_PORT = 6565;
 
-var HOST = '127.0.0.1';
-var PORT = 6969;
-
-var sockclient = new net.Socket();
-sockclient.connect(PORT, HOST, function() {
-
-    console.log('CONNECTED TO: ' + HOST + ':' + PORT);
-    // Write a message to the socket as soon as the client is connected, the server will receive it as message from the client 
-    //client.write('I am Chuck Norris!');
-
+var message = new Buffer("Hoge");
+var sockclient = dgram.createSocket('udp4');
+sockclient.send(message, 0, message.length, ENGINE_PORT, ENGINE_HOST, function(err, bytes){
+	if(err) console.log(err);
+	console.log("Message sent!!");
 });
-
-// Add a 'data' event handler for the client socket
-// data is what the server sent to this socket
-sockclient.on('data', function(data) {
-    
-    console.log('DATA: ' + data);
-    // Close the client socket completely
-    sockclient.destroy();
-    
-});
-
-// Add a 'close' event handler for the client socket
-sockclient.on('close', function() {
-    console.log('Connection closed');
-});
-
 
 function GUID(){
 	var streamId = "";
@@ -128,26 +110,19 @@ RPCBody = {
 				});
 
 	},
-	'deploy' : function(socket, data, res){
-		console.log("kitaaa");
-		//res.send({error:false, msg:"hoge"});
-		//return;
-		cp.exec('../synthctrl '+ datadir+"/"+data.name,  function(err, stdout, stderr){
-		//cp.exec('ls',  function(err, stdout, stderr){
-			console.log(err);
-			console.log(stdout);
-			console.log(stderr);
-			if(err) res.send({error:true, msg:err});
-			else res.send({error:false, stdout:stdout, stderr:stderr});
-		});	
+	'remove' : function(socket, data, res){
+		fs.unlink(datadir+"/"+data.name, function(err){
+			if(err) res.send({error:true,msg:err});
+			else res.send({error:false});
+		});
 	},
-
-	'setprof' : function(socket, data, res){
-		console.log('setprof : ' + JSON.stringify(data));
-		var user_id = socket.request.session.passport.user;
-		mongo.db.collection('users').update({user_id:user_id}, {user_id:user_id,profile:data}, {upsert:true}, function(err,ret){ console.log([err,ret]);});
-		res.send({error:false});
-	}
+	'deploy' : function(socket, data, res){
+		var message = new Buffer("deploy "+data.name);
+		sockclient.send(message, 0, message.length, ENGINE_PORT, ENGINE_HOST, function(err, bytes){
+			if(err) console.log(err);
+			console.log("Message sent!!");
+		});
+	},
 };
 
 function RPCResponse(socket, rpcid)
@@ -166,10 +141,7 @@ RPCResponse.prototype.send = function(resbody){
 function cleanup()
 {
 	console.log("Graceful shutdown ... ");
-	mongo.db.collection('rooms').update({},{$set:{member:[], content_list:{}}},{multi:true}, function(err,res){
-		console.log("Clear member and content list from database done");
-		process.exit(0);
-	});
+	process.exit(0);
 }
 
 process.on('SIGTERM', cleanup);

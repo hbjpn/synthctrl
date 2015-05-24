@@ -3,7 +3,7 @@ SRCS := synthctrl.cpp util.cpp io.cpp raspi_gpio.cpp socket.cpp
 OBJS := $(SRCS:%.cpp=%.o)
 DEPS := $(SRCS:%.cpp=%.d)
 INCL := -I picojson -I rtmidi-2.1.0
-LIBS := -L rtmidi-2.1.0 -lrtmidi -L wiringPi/wiringPi -lwiringPi -lpthread
+LIBS := -L rtmidi-2.1.0 -lrtmidi -L wiringPi/wiringPi -lwiringPi -lpthread -lrt
 OPTS := -DLINUX
 CC := g++
 

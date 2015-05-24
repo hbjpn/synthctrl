@@ -3,23 +3,37 @@
 
 #include <queue>
 #include <pthread.h>
+#include <string>
 
 #define AsByte(s) atoi((s).c_str())
 #define AsChar(s) (s)[0]
-
+#define AsInt(s) atoi((s).c_str())
+#define AsInt64(s) atoll((s).c_str());
 enum EventType{
 	EVT_GPIO0_TRIGERRED = 0,
 	EVT_GPIO1_TRIGERRED,
+	EVT_DEPLOY,
+    EVT_TIMER_EXPIRED,
 	EVT_END_LOOP
 };
 
 struct Event{
-	EventType type;
+	EventType _type;
+	Event(EventType type) : _type(type){}; 
+	virtual EventType type() const { return _type; }
+};
+
+struct EventDeploy : public Event
+{
+	std::string _fn;
+	EventDeploy(const char* fn) : Event(EVT_DEPLOY){
+		_fn = fn;
+	}
 };
 
 class EventQueue
 {
-	std::queue<Event> evt_queue;
+	std::queue<const Event*> evt_queue;
 	pthread_mutex_t evt_loop_mutex;
 	pthread_cond_t evt_loop_cond;
 
@@ -29,8 +43,8 @@ public:
 
 	virtual ~EventQueue();
 	
-	void push(Event evt);
-	Event pop();
+	void push(const Event* evt);
+	const Event* pop();
 };
 
 class Thread{
@@ -42,6 +56,9 @@ public:
 	virtual ~Thread();
 	virtual void run() = 0;
 };
+
+typedef void (*TimerCallback)(void);
+int setTimer(long long int duration_ns, TimerCallback callback, int signo);
 
 
 #endif

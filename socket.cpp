@@ -12,6 +12,26 @@ SocketInterface::SocketInterface (const char* addr, int port, EventQueue & eq):_
 {
 	strncpy(_addr, addr, 256-1);
 	_port = port;
+	_shutdown = false;
+}
+
+void
+SocketInterface::shutdown()
+{
+    _shutdown = true; // TODO : lock
+}
+
+char* token(char* src, char* dst)
+{
+    while(*src == ' ') ++src;
+    char* base = src;
+    while(*src != ' ' && *src != 0){
+        *dst = *src;
+        ++src;
+        ++dst;
+    }
+    *dst = 0;
+    return src;
 }
 
 void
@@ -52,7 +72,7 @@ SocketInterface::run ()
     maxfd = sock1;
 
     /* このサンプルでは、10秒間データを受信しないとループを抜けます */
-    while (1) {
+    while (!_shutdown) { // TODO: lock
 	/*
 	   読み込み用fd_setの初期化
 	   selectが毎回内容を上書きしてしまうので、毎回初期化します
@@ -64,9 +84,10 @@ SocketInterface::run ()
 
 	/* タイムアウトの場合にselectは0を返します */
 	if (n == 0) {
-	    /* ループから抜けます */
-	    printf ("timeout\n");
-	    break;
+        tv.tv_sec = 1;
+        tv.tv_usec = 0;
+
+        continue;
 	}
 
 	/* sock1に読み込み可能データがある場合 */
@@ -74,8 +95,16 @@ SocketInterface::run ()
 	    /* sock1からデータを受信して表示します */
 	    memset (buf, 0, sizeof (buf));
 	    recv (sock1, buf, sizeof (buf), 0);
-	    printf ("%s\n", buf);
-	}
+	    printf ("Receive : %s\n", buf);
+            char dst[128];
+            char* next = token(buf, dst);
+            if(strcmp(dst,"deploy") == 0){
+                next = token(next, dst);
+                _eq.push(new EventDeploy(dst));
+            }else{
+                _eq.push(new Event(EVT_GPIO0_TRIGERRED));
+	        }
+        }
     }
 
     close (sock1);

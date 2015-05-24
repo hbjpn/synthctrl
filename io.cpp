@@ -16,7 +16,9 @@ bool loadJSON(const char* fn, picojson::value& v)
 	ifs.read(buf, len);
 	buf[len] = '\0';
 	std::string s(buf);
-	
+
+    std::cerr << s << std::endl;
+
 	std::string err = picojson::parse(v, s);
 	if( !err.empty() ){
 		std::cerr << err << std::endl;

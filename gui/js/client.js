@@ -23,13 +23,22 @@ function save_online()
 	});
 }
 
+function remove_ctrl()
+{
+	if(!window.confirm("Do you really want to remove " + $("#file_name").val() + " ?")){
+		return;
+	}
+	man.RPC("remove", {name:$("#file_name").val()}, function(res){
+		console.log(res);
+		loadlist();	
+	});
+}
+
 function run()
 {
 	man.RPC("deploy", {name:$("#file_name").val()}, function(res){
 		console.log(res);	
 	});
-
-	alert("run");
 }
 
 function RPCManager(wsurl)
@@ -66,11 +75,15 @@ RPCManager.prototype.on = function(evt, callback, options)
 	}
 };
 
-$("document").ready(function(){
-	man = new RPCManager("192.168.11.7:8081");
-
+function loadlist()
+{
 	man.RPC('list', {}, function(res){
 		fileListCtrl.files = res["files"];
 		fileListCtrl.$apply();		
 	});	
+}
+
+$("document").ready(function(){
+	man = new RPCManager("192.168.11.7:8081");
+	loadlist();
 });
