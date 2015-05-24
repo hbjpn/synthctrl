@@ -37,6 +37,35 @@ function remove_ctrl()
 function run()
 {
 	man.RPC("deploy", {name:$("#file_name").val()}, function(res){
+		console.log(res);
+	});
+    dashboard();
+}
+
+function dashboard()
+{
+    $("#dashboard").css({"display":"block"});
+    /*{"position":"absolute","top":"0px","left":"0px","width":"100%","height":"100%","background-color":"gray"});
+    $("#gpio0btn").css({"width":"50%","height":"80%"});
+    $("#gpio1btn").css({"width":"50%","height":"80%"});
+    */
+}
+
+function closedashboard()
+{
+    $("#dashboard").css({"display":"none"});
+}
+
+function OnGPIO0()
+{
+	man.RPC("gpio0", {}, function(res){
+		console.log(res);	
+	});
+}
+
+function OnGPIO1()
+{
+	man.RPC("gpio1", {}, function(res){
 		console.log(res);	
 	});
 }
@@ -83,7 +112,27 @@ function loadlist()
 	});	
 }
 
+var cnt = 0;
 $("document").ready(function(){
 	man = new RPCManager("192.168.11.7:8081");
 	loadlist();
+
+    var touchsupport = ('ontouchstart' in window);
+    var bindevent = touchsupport ? "touchstart" : "click";
+    $("#gpio0btn").on(bindevent, function(event){
+        OnGPIO0();
+        $("#gpio0btn").html(""+(++cnt));
+        event.preventDefault();
+    });
+
+    $("#gpio1btn").on(bindevent, function(event){
+        OnGPIO1();
+        $("#gpio1btn").html(""+(++cnt));
+        event.preventDefault();
+    });
+    $("#closebtn").on(bindevent, function(event){
+        closedashboard(); 
+        event.preventDefault(); 
+    });
+
 });

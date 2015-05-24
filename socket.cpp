@@ -101,9 +101,11 @@ SocketInterface::run ()
             if(strcmp(dst,"deploy") == 0){
                 next = token(next, dst);
                 _eq.push(new EventDeploy(dst));
-            }else{
+            }else if(strcmp(dst,"gpio0") == 0){
                 _eq.push(new Event(EVT_GPIO0_TRIGERRED));
-	        }
+	        }else if(strcmp(dst,"gpio1") == 0){
+                _eq.push(new Event(EVT_GPIO1_TRIGERRED));
+            }
         }
     }
 

@@ -123,6 +123,21 @@ RPCBody = {
 			console.log("Message sent!!");
 		});
 	},
+	'gpio0' : function(socket, data, res){
+		var message = new Buffer("gpio0");
+		sockclient.send(message, 0, message.length, ENGINE_PORT, ENGINE_HOST, function(err, bytes){
+			if(err) console.log(err);
+			console.log("Message sent!!");
+		});
+	},
+	'gpio1' : function(socket, data, res){
+		var message = new Buffer("gpio1");
+		sockclient.send(message, 0, message.length, ENGINE_PORT, ENGINE_HOST, function(err, bytes){
+			if(err) console.log(err);
+			console.log("Message sent!!");
+		});
+	}
+
 };
 
 function RPCResponse(socket, rpcid)
