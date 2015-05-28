@@ -51,13 +51,15 @@ class CtrlSet
     std::vector<CtrlSeq> _cs;
     int _idx;
     RtMidiOut* _midiOut;
+    SocketInterface* _si;
 public:
     CtrlSet(){};
     void setMidiOut(RtMidiOut* midiOut){
         _midiOut = midiOut;
     }
-    void init(const char* fn, std::map<std::string, midigen>& mgm){
+    void init(const char* fn, std::map<std::string, midigen>& mgm, SocketInterface* si){
         clear();
+        _si = si;
 	    config cfg;
 	    loadConfig(fn, cfg);
 
@@ -94,33 +96,42 @@ public:
         _cs.clear();
         _idx = 0;
     }
+    void increment()
+    {
+        char buf[128];
+        sprintf(buf,"p %d",_idx);
+        _si->send(buf);
+        ++_idx;
+    }
     void proceed(){
-        for(; _idx < _cs.size(); ++_idx){
+        for(; _idx < _cs.size(); ){
             if(_cs[_idx].type == MIDI){
                 _midiOut->sendMessage(_cs[_idx].midiMsg);
                 dump(&(*_cs[_idx].midiMsg)[0], _cs[_idx].midiMsg->size());
             }else if(_cs[_idx].type == TIMER){
                 setTimer(_cs[_idx].duration_ns, NULL, SIGRTMIN);
                 break;
-            }else
+            }else{
                 break;
+            }
+            increment();
         }
     };
     void notifyGPIO0(){
         if(_idx < _cs.size() && _cs[_idx].type == WAIT_GPIO0){
-            ++_idx;
+            increment();
             proceed();
         }
     };
     void notifyGPIO1(){
         if(_idx < _cs.size() && _cs[_idx].type == WAIT_GPIO1){
-            ++_idx;
+            increment();
             proceed();
         }
     }
     void notifyTimerExpire(){
         if(_idx < _cs.size() && _cs[_idx].type == TIMER){
-            ++_idx;
+            increment();
             proceed();
         }
     }
@@ -158,7 +169,7 @@ void* event_loop(void* arg)
 			const EventDeploy* devt = dynamic_cast<const EventDeploy*>(evt);
 			printf("Deploy : %s\n", devt->_fn.c_str());
             std::string path = "data/" + devt->_fn;
-			cs.init(path.c_str(), mgm);
+			cs.init(path.c_str(), mgm, si);
             break;
         }
         case EVT_TIMER_EXPIRED:

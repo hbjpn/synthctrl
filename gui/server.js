@@ -54,6 +54,8 @@ rooms = {};
 contentList = {};
 
 
+var websocket = null;
+
 var fs = require("fs");
 
 
@@ -68,6 +70,19 @@ var sockclient = dgram.createSocket('udp4');
 sockclient.send(message, 0, message.length, ENGINE_PORT, ENGINE_HOST, function(err, bytes){
 	if(err) console.log(err);
 	console.log("Message sent!!");
+});
+
+sockclient.on('message', function(msg, rinfo){
+    msgs = msg.toString();
+    console.log("Message received from local server : " + msg.toString());
+    if(websocket){
+        var type = msgs.split(" ")[0];
+        var arg = msgs.split(" ")[1] - 0;
+        var obj = {type:type, index:arg};
+        console.log("Send notification");
+        console.log(obj);
+        websocket.emit('notify',obj);
+    }
 });
 
 function GUID(){
@@ -119,8 +134,8 @@ RPCBody = {
 	'deploy' : function(socket, data, res){
 		var message = new Buffer("deploy "+data.name);
 		sockclient.send(message, 0, message.length, ENGINE_PORT, ENGINE_HOST, function(err, bytes){
-			if(err) console.log(err);
-			console.log("Message sent!!");
+			if(err) res.send({error:true});
+			else res.send({error:false});
 		});
 	},
 	'gpio0' : function(socket, data, res){
@@ -165,6 +180,7 @@ process.on('SIGINT', cleanup);
 io.sockets.
   use(function(socket,next){ sessionMiddleware(socket.request, {}, next); }).
   on('connection', function (socket) {
+    websocket = socket;
     console.log("Socket user id = " + JSON.stringify(socket.request.session.passport));
   socket.custom = {};
   socket.on('RPC', function(req) {

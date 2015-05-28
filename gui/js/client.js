@@ -37,7 +37,15 @@ function remove_ctrl()
 function run()
 {
 	man.RPC("deploy", {name:$("#file_name").val()}, function(res){
-		console.log(res);
+        var jsons = $("#score_code").val();
+        var obj = JSON.parse(jsons);
+
+        var ps = "<table>";
+        for(var i = 0; i < obj.length; ++i){
+            ps += ("<tr><td id='pvtd"+i+"'>"+JSON.stringify(obj[i])+"</td></tr>"); 
+        }
+        ps += "</table>";
+        $("#proceedview").html(ps);
 	});
     dashboard();
 }
@@ -75,7 +83,17 @@ function RPCManager(wsurl)
 	this.srv_socket = io.connect(wsurl);
 	this.SocketIOEvt = {};
 	this.RPCS = {};
-	this.RPCID = 0;	
+	this.RPCID = 0;
+
+    this.notifies = {};
+
+    var me = this;
+    me.srv_socket.on('notify', function(data){
+        if(data["type"] in me.notifies){
+            me.notifies[data["type"]](data);
+        }
+    });
+
 }
 RPCManager.prototype.RPC = function(evt, data, callback, options){
 	var me = this;
@@ -91,6 +109,10 @@ RPCManager.prototype.RPC = function(evt, data, callback, options){
 	me.srv_socket.emit('RPC', req);
 	me.RPCID++;
 };
+
+RPCManager.prototype.onNotification = function(type, callback){
+    this.notifies[type]=callback;
+}
 
 /**
  * Broadcasting based RPC. (Utility)
@@ -117,17 +139,21 @@ $("document").ready(function(){
 	man = new RPCManager("192.168.11.7:8081");
 	loadlist();
 
+    man.onNotification("p", function(data){
+        var id = "pvtd"+data["index"];
+        var idn = "pvtd"+(data["index"]+1);
+        $("#"+id).css({"color":"blue"});
+        $("#"+idn).css({"color":"red"});
+    });
     var touchsupport = ('ontouchstart' in window);
     var bindevent = touchsupport ? "touchstart" : "click";
     $("#gpio0btn").on(bindevent, function(event){
         OnGPIO0();
-        $("#gpio0btn").html(""+(++cnt));
         event.preventDefault();
     });
 
     $("#gpio1btn").on(bindevent, function(event){
         OnGPIO1();
-        $("#gpio1btn").html(""+(++cnt));
         event.preventDefault();
     });
     $("#closebtn").on(bindevent, function(event){

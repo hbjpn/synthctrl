@@ -7,6 +7,7 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <errno.h>
 
 SocketInterface::SocketInterface (const char* addr, int port, EventQueue & eq):_eq (eq)
 {
@@ -19,6 +20,13 @@ void
 SocketInterface::shutdown()
 {
     _shutdown = true; // TODO : lock
+}
+
+void
+SocketInterface::send(const char* s)
+{
+   int sent = ::sendto(_sock1, s, strlen(s), 0, &_peer_addr, _peer_addrlen); 
+   printf("Sent %s : %d, %d\n", s, sent, errno);
 }
 
 char* token(char* src, char* dst)
@@ -37,7 +45,6 @@ char* token(char* src, char* dst)
 void
 SocketInterface::run ()
 {
-    int sock1;
     struct sockaddr_in addr1;
     fd_set fds, readfds;
     char buf[2048];
@@ -46,7 +53,7 @@ SocketInterface::run ()
     struct timeval tv;
 
     /* 受信ソケットを2つ作ります */
-    sock1 = socket (AF_INET, SOCK_DGRAM, 0);
+    _sock1 = socket (AF_INET, SOCK_DGRAM, 0);
 
     addr1.sin_family = AF_INET;
 
@@ -56,20 +63,20 @@ SocketInterface::run ()
     addr1.sin_port = htons (_port);
 
     /* 2つの別々のポートで待つようにbindします */
-    bind (sock1, (struct sockaddr *) &addr1, sizeof (addr1));
+    bind (_sock1, (struct sockaddr *) &addr1, sizeof (addr1));
 
     /* fd_setの初期化します */
     FD_ZERO (&readfds);
 
     /* selectで待つ読み込みソケットとしてsock1を登録します */
-    FD_SET (sock1, &readfds);
+    FD_SET (_sock1, &readfds);
 
     /* 10秒でタイムアウトするようにします */
     tv.tv_sec = 1;
     tv.tv_usec = 0;
 
 
-    maxfd = sock1;
+    maxfd = _sock1;
 
     /* このサンプルでは、10秒間データを受信しないとループを抜けます */
     while (!_shutdown) { // TODO: lock
@@ -91,10 +98,10 @@ SocketInterface::run ()
 	}
 
 	/* sock1に読み込み可能データがある場合 */
-	if (FD_ISSET (sock1, &fds)) {
+	if (FD_ISSET (_sock1, &fds)) {
 	    /* sock1からデータを受信して表示します */
 	    memset (buf, 0, sizeof (buf));
-	    recv (sock1, buf, sizeof (buf), 0);
+	    recvfrom (_sock1, buf, sizeof (buf), 0, &_peer_addr, &_peer_addrlen);
 	    printf ("Receive : %s\n", buf);
             char dst[128];
             char* next = token(buf, dst);
@@ -109,5 +116,5 @@ SocketInterface::run ()
         }
     }
 
-    close (sock1);
+    close (_sock1);
 }
