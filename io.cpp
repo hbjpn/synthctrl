@@ -52,11 +52,12 @@ void plainfy(picojson::value& v, config& a)
 	}
 }
 
-void loadConfig(const char* fn, config& cfg)
+bool loadConfig(const char* fn, config& cfg)
 {
 	picojson::value v;
-	loadJSON(fn, v);
-	plainfy(v, cfg);
+	bool ret = loadJSON(fn, v);
+    if(ret)
+	    plainfy(v, cfg);
 }
 
 

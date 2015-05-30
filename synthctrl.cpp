@@ -2,7 +2,7 @@
 
 #include <unistd.h>             /* for sleep() function */
 #include <pthread.h>
-
+#include <syslog.h>
 #include <queue>
 #include <signal.h>
 
@@ -61,8 +61,11 @@ public:
         clear();
         _si = si;
 	    config cfg;
-	    loadConfig(fn, cfg);
-
+	    bool ret = loadConfig(fn, cfg);
+        if(!ret){
+            syslog(LOG_NOTICE,"Failed to load config file %s.", fn);
+            return;
+        }
 	    for(int i = 0; i < cfg.size(); ++i){
 	    	std::string& type = cfg[i]["type"];
             CtrlSeq seq;
@@ -153,7 +156,7 @@ void* event_loop(void* arg)
 		const Event* evt = evt_queue->pop();
 
 		/* process event */
-		printf("Event triggered : %d\n", evt->type());
+		syslog(LOG_NOTICE, "Event triggered : %d", evt->type());
 
 		switch(evt->type()){
 		case EVT_GPIO0_TRIGERRED:
@@ -167,7 +170,7 @@ void* event_loop(void* arg)
 			break;
 		case EVT_DEPLOY:{
 			const EventDeploy* devt = dynamic_cast<const EventDeploy*>(evt);
-			printf("Deploy : %s\n", devt->_fn.c_str());
+			syslog(LOG_NOTICE, "Deploy : %s\n", devt->_fn.c_str());
             std::string path = "data/" + devt->_fn;
 			cs.init(path.c_str(), mgm, si);
             break;
@@ -245,13 +248,27 @@ void start()
 	pthread_create(&threads[0], NULL, event_loop, NULL);
 
 	wait_signal(); // Ctrl+C is monitored
-	fprintf(stderr, "Waiting for end threads ... \n");
+	syslog(LOG_NOTICE, "Waiting for end threads ... ");
 	pthread_join(threads[0],NULL);
 }
 
+int mainLoop()
+{       
+    openlog("synthctrl", LOG_CONS|LOG_PID, LOG_USER); 
+    syslog(LOG_NOTICE, "sysctrl start");
 
-int main(int argc, char *argv[]) {
-
+    // Create PID file
+    const char* pidfile = "/var/run/synthctrl.pid";
+    FILE* fp = fopen(pidfile,"w");
+    if(!fp){
+        syslog(LOG_ERR, "Failed to create pid file at %s", pidfile);
+        closelog();
+        return 0;
+    }
+    fprintf(fp,"%ld\n",(long int)getpid());
+    fclose(fp);
+     
+    closelog();
 	mgm["noteon"]     = generic::noteon;
 	mgm["noteoff"]    = generic::noteoff;
 	mgm["korg::zone"] = korg::zone;
@@ -261,9 +278,7 @@ int main(int argc, char *argv[]) {
 
 	midiOut = new RtMidiOut();
 	unsigned int nports = midiOut->getPortCount();
-	std::cerr << nports << " MIDI ports available. Choose number : " << std::endl;
-	int port = 0;
-	std::cin >> port;
+	int port = nports - 1; // Use last MIDI
 	midiOut->openPort(port);
 
     cs.setMidiOut(midiOut);
@@ -282,7 +297,22 @@ int main(int argc, char *argv[]) {
 #endif
 
 	delete midiOut;
+    syslog(LOG_NOTICE, "syncthctrl exits normally");
+    remove(pidfile);
+    closelog();
 	return 0;          // so might be a good idea to erase it after closing.
+
+}
+
+int main(int argc, char *argv[])
+{
+    if(daemon(0,0) == 0){
+        mainLoop();
+    } else{
+        printf("Failed to make daemon\n");
+    }
+    return 0;
+ 
 }
 
 ///////////////////////////////////////////////////////////////////////////
