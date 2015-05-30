@@ -58,6 +58,7 @@ bool loadConfig(const char* fn, config& cfg)
 	bool ret = loadJSON(fn, v);
     if(ret)
 	    plainfy(v, cfg);
+    return ret;
 }
 
 

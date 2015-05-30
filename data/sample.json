@@ -1,7 +1,10 @@
 [
+        {
+                "type":"WAIT_GPIO1"
+        },
 	{
 		"type":"noteon",
-		"channel":"1",
+		"channel":"0",
 		"note":"64",
 		"velocity":"100"
 	},

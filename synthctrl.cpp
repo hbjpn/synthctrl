@@ -171,8 +171,7 @@ void* event_loop(void* arg)
 		case EVT_DEPLOY:{
 			const EventDeploy* devt = dynamic_cast<const EventDeploy*>(evt);
 			syslog(LOG_NOTICE, "Deploy : %s\n", devt->_fn.c_str());
-            std::string path = "data/" + devt->_fn;
-			cs.init(path.c_str(), mgm, si);
+			cs.init(devt->_fn.c_str(), mgm, si);
             break;
         }
         case EVT_TIMER_EXPIRED:

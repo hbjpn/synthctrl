@@ -21,6 +21,8 @@ var port = argv.port || 8081;
 var datadir = argv.datadir || "../data/";
 // Authentication for Facebook
 
+console.log("port set to " + port);
+console.log("datadir set to " + datadir);
 console.log(argv);
 app.set("view engine", "ejs");
 app.use(sessionMiddleware);
@@ -132,7 +134,7 @@ RPCBody = {
 		});
 	},
 	'deploy' : function(socket, data, res){
-		var message = new Buffer("deploy "+data.name);
+		var message = new Buffer("deploy "+(datadir+"/"+data.name));
 		sockclient.send(message, 0, message.length, ENGINE_PORT, ENGINE_HOST, function(err, bytes){
 			if(err) res.send({error:true});
 			else res.send({error:false});

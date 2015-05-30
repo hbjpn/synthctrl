@@ -40,7 +40,7 @@ function run()
         var jsons = $("#score_code").val();
         var obj = JSON.parse(jsons);
 
-        var ps = "<table>";
+        var ps = "<table class='table table-striped'>";
         for(var i = 0; i < obj.length; ++i){
             ps += ("<tr><td id='pvtd"+i+"'>"+JSON.stringify(obj[i])+"</td></tr>"); 
         }
