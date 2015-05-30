@@ -21,3 +21,9 @@ clean:
 	rm -f $(PROG) $(OBJS) $(DEPS)
 
 
+PREFIX := /usr
+install: all
+	install --mode=755 rtmidi-2.1.0/librtmidi.a $(PREFIX)/lib/
+	install --mode=755 rtmidi-2.1.0/librtmidi.so.2.1.0 $(PREFIX)/lib/
+	ln -sf $(PREFIX)/lib/librtmidi.so.2.1.0 $(PREFIX)/lib/librtmidi.so
+	ln -sf $(PREFIX)/lib/librtmidi.so.2.1.0 $(PREFIX)/lib/librtmidi.so.2
