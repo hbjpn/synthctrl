@@ -1,0 +1,46 @@
+[
+        {
+                "type":"WAIT_MIDI_IN",
+                "msg":"b0 40 7f  "
+        },
+	{
+		"type":"noteon",
+		"channel":"0",
+		"note":"64",
+		"velocity":"100"
+	},
+	{
+		"type":"noteon",
+		"channel":"0",
+		"note":"68",
+		"velocity":"100"
+	},
+	{
+		"type":"noteon",
+		"channel":"0",
+		"note":"71",
+		"velocity":"100"
+	},
+        {
+                "type":"WAIT_MIDI_IN",
+                "msg":"b0 40 7f  "
+        },
+	{
+		"type":"noteon",
+		"channel":"0",
+		"note":"64",
+		"velocity":"100"
+	},
+	{
+		"type":"noteon",
+		"channel":"0",
+		"note":"67",
+		"velocity":"100"
+	},
+	{
+		"type":"noteon",
+		"channel":"0",
+		"note":"71",
+		"velocity":"100"
+	}
+]

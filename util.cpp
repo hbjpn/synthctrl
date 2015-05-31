@@ -1,5 +1,34 @@
 #include "util.h"
 #include <stdio.h>
+#include <stdlib.h>
+
+const char* token(const char* src, char* dst)
+{
+    *dst = 0;
+    while(*src == ' ') ++src;
+    while(*src != ' ' && *src != 0){
+        *dst = *src;
+        ++src;
+        ++dst;
+    }
+    *dst = 0;
+    return src;
+}
+
+
+void AsByteArray(const char* s, std::vector<unsigned char>& data)
+{
+    char buf[128];
+    const char* next = s;
+    while(1){
+        next = token(next, &buf[0]);
+        if(buf[0] == 0)
+            break;
+        char* endptr = 0;
+        unsigned long int v = strtoul(&buf[0], &endptr, 16);
+        data.push_back((unsigned char)v);
+    }
+}
 
 EventQueue::EventQueue ()
 {

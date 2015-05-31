@@ -25,7 +25,7 @@ typedef int (*midigen)(unsigned char*, std::map<std::string, std::string>&);
 RtMidiOut* midiOut = NULL;
 
 ///////////////////////////////////////////////////////////////////////////
-void dump(unsigned char* buf, int len)
+void dump(const unsigned char* buf, int len)
 {
 	for(int i = 0; i < len; ++i){
 		fprintf(stderr, "0x%02x ", buf[i]);
@@ -39,7 +39,8 @@ class CtrlSet
         MIDI = 0,
         WAIT_GPIO0,
         WAIT_GPIO1,
-        TIMER
+        TIMER,
+        WAIT_MIDI_IN
     };
     struct CtrlSeq{
         CtrlSeqType type;
@@ -76,6 +77,11 @@ public:
             }else if(type == "TIMER"){
                 seq.type = TIMER;
                 seq.duration_ns = AsInt64(cfg[i]["duration"]);
+            }else if(type == "WAIT_MIDI_IN"){
+                seq.type = WAIT_MIDI_IN;
+                seq.midiMsg = new std::vector<unsigned char>();
+                AsByteArray(cfg[i]["msg"].c_str(),*(seq.midiMsg));
+                dump(&(*seq.midiMsg)[0], seq.midiMsg->size());
             }else{
                 seq.type = MIDI;
                 seq.midiMsg = new std::vector<unsigned char>();
@@ -138,6 +144,21 @@ public:
             proceed();
         }
     }
+    void notifyMIDIIn(const std::vector<unsigned char>& data){
+        printf("MIDI IN\n");
+        dump(&data[0],data.size());
+
+        if(_idx < _cs.size() && _cs[_idx].type == WAIT_MIDI_IN){
+            if(data.size() != _cs[_idx].midiMsg->size())
+                return;
+            for(int i = 0; i < data.size(); ++i){
+                if(data[i] != _cs[_idx].midiMsg->at(i))
+                    return;
+            }
+            increment();
+            proceed();
+        }
+    }
 };
 
 
@@ -146,11 +167,87 @@ CtrlSet cs;
 std::map<std::string, midigen> mgm;
 
 
+void mycallback( double deltatime, std::vector< unsigned char > *message, void *userData )
+{
+    EventQueue* evt_queue = (EventQueue*)userData;
+    /*unsigned int nBytes = message->size();
+    for ( unsigned int i=0; i<nBytes; i++ )
+        std::cout << "Byte " << i << " = " << (int)message->at(i) << ", ";
+    if ( nBytes > 0 )
+        std::cout << "stamp = " << deltatime << std::endl;
+    */
+	Event* evt = new EventMIDIIn(*message);
+	evt_queue->push(evt);
+}
+
+bool chooseMidiPort( RtMidiIn *rtmidi )
+{
+  std::cout << "\nWould you like to open a virtual input port? [y/N] ";
+
+  std::string keyHit;
+  std::getline( std::cin, keyHit );
+  if ( keyHit == "y" ) {
+    rtmidi->openVirtualPort();
+    return true;
+  }
+
+  std::string portName;
+  unsigned int i = 0, nPorts = rtmidi->getPortCount();
+  if ( nPorts == 0 ) {
+    std::cout << "No input ports available!" << std::endl;
+    return false;
+  }
+
+  if ( nPorts == 1 ) {
+    std::cout << "\nOpening " << rtmidi->getPortName() << std::endl;
+  }
+  else {
+    for ( i=0; i<nPorts; i++ ) {
+      portName = rtmidi->getPortName(i);
+      std::cout << "  Input port #" << i << ": " << portName << '\n';
+    }
+
+    do {
+      std::cout << "\nChoose a port number: ";
+      std::cin >> i;
+    } while ( i >= nPorts );
+    std::getline( std::cin, keyHit );  // used to clear out stdin
+  }
+
+  rtmidi->openPort( i );
+
+  return true;
+}
+
+
 void* event_loop(void* arg)
 {
 	evt_queue = new EventQueue();
 	SocketInterface* si = new SocketInterface("127.0.0.1", 6565, *evt_queue);
- 
+
+
+    RtMidiIn *midiin = 0;
+
+    try {
+
+        // RtMidiIn constructor
+        midiin = new RtMidiIn();
+
+        // Call function to select port.
+        //if ( chooseMidiPort( midiin ) == false ) goto cleanup;
+        midiin->openPort(1);
+        // Set our callback function.  This should be done immediately after
+        // opening the port to avoid having incoming messages written to the
+        // queue instead of sent to the callback function.
+        midiin->setCallback( &mycallback, evt_queue );
+
+        // Don't ignore sysex, timing, or active sensing messages.
+        midiin->ignoreTypes( false, true, true );
+
+    } catch ( RtMidiError &error ) {
+        error.printMessage();
+    }
+
 	bool loop_continue = true;
 	while(loop_continue){
 		const Event* evt = evt_queue->pop();
@@ -177,12 +274,17 @@ void* event_loop(void* arg)
         case EVT_TIMER_EXPIRED:
             cs.notifyTimerExpire();
             break;
-		default:
+        case EVT_MIDI_IN:{
+            const EventMIDIIn* cevt = dynamic_cast<const EventMIDIIn*>(evt);
+            cs.notifyMIDIIn(cevt->_data);
+            break;
+        }default:
 			break;
 		}
 		delete evt;
 	}
-	fprintf(stderr, "End event loop thread\n");
+    delete midiin;
+    fprintf(stderr, "End event loop thread\n");
 	si->shutdown();
 	si->join();
 	delete evt_queue;
@@ -305,10 +407,14 @@ int mainLoop()
 
 int main(int argc, char *argv[])
 {
-    if(daemon(0,0) == 0){
+    if(argc >= 2){
         mainLoop();
-    } else{
-        printf("Failed to make daemon\n");
+    }else{
+        if(daemon(0,0) == 0){
+            mainLoop();
+        } else{
+            printf("Failed to make daemon\n");
+        }
     }
     return 0;
  

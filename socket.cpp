@@ -1,4 +1,5 @@
 #include "socket.h"
+#include "util.h"
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -27,19 +28,6 @@ SocketInterface::send(const char* s)
 {
    int sent = ::sendto(_sock1, s, strlen(s), 0, &_peer_addr, _peer_addrlen); 
    printf("Sent %s : %d, %d\n", s, sent, errno);
-}
-
-char* token(char* src, char* dst)
-{
-    while(*src == ' ') ++src;
-    char* base = src;
-    while(*src != ' ' && *src != 0){
-        *dst = *src;
-        ++src;
-        ++dst;
-    }
-    *dst = 0;
-    return src;
 }
 
 void
@@ -104,7 +92,7 @@ SocketInterface::run ()
 	    recvfrom (_sock1, buf, sizeof (buf), 0, &_peer_addr, &_peer_addrlen);
 	    printf ("Receive : %s\n", buf);
             char dst[128];
-            char* next = token(buf, dst);
+            const char* next = token(buf, dst);
             if(strcmp(dst,"deploy") == 0){
                 next = token(next, dst);
                 _eq.push(new EventDeploy(dst));
