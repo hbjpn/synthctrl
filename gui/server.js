@@ -2,21 +2,6 @@ var argv = require('optimist').argv;
 var cp = require('child_process');
 var express = require('express');
 var app = express();
-var http = require('http').Server(app);
-var io = require('socket.io').listen(http);
-var session = require('express-session');
-var bodyParser = require("body-parser")
-  , cookieParser = require("cookie-parser")
-  , methodOverride = require('method-override');
-// Set up the Session middleware using a MongoDB session store
-var expressSession = require("express-session");
-var sessionMiddleware = expressSession({
-    name: "sessioncookie",
-    secret: "hogefugahoge",
-    store: new expressSession.MemoryStore()
-});
-
-
 var port = argv.port || 8081;
 var datadir = argv.datadir || "../data/";
 // Authentication for Facebook
@@ -25,10 +10,10 @@ console.log("port set to " + port);
 console.log("datadir set to " + datadir);
 console.log(argv);
 app.set("view engine", "ejs");
-app.use(sessionMiddleware);
-app.use(cookieParser());
-app.use(bodyParser());
-app.use(methodOverride());
+//app.use(sessionMiddleware);
+//app.use(cookieParser());
+//app.use(bodyParser());
+//app.use(methodOverride());
 
 
 app.get('/', function(req, res){
@@ -49,8 +34,17 @@ app.get("/test", function(req,res){
 	res.send(req.user);
 });
 
+var http = require('http').Server(app);
 http.listen(port);
 console.log("Listen on port " + port);
+var io = require('socket.io').listen(http);
+
+
+
+
+
+
+
 
 rooms = {};
 contentList = {};
@@ -153,7 +147,13 @@ RPCBody = {
 			if(err) console.log(err);
 			console.log("Message sent!!");
 		});
-	}
+	},
+    'command' : function(socket, data, res){
+        cp.exec(data.command, function(err, stdout, stderr){
+            console.log("Executing : " + data.command);
+            res.send({error:err?true:false, stdout:stdout, stderr:stderr});
+        });
+    }
 
 };
 
@@ -180,10 +180,10 @@ process.on('SIGTERM', cleanup);
 process.on('SIGINT', cleanup);
 
 io.sockets.
-  use(function(socket,next){ sessionMiddleware(socket.request, {}, next); }).
+  //use(function(socket,next){ sessionMiddleware(socket.request, {}, next); }).
   on('connection', function (socket) {
     websocket = socket;
-    console.log("Socket user id = " + JSON.stringify(socket.request.session.passport));
+    //console.log("Socket user id = " + JSON.stringify(socket.request.session.passport));
   socket.custom = {};
   socket.on('RPC', function(req) {
 	  console.log('RPC call');
@@ -196,6 +196,7 @@ io.sockets.
 	 }
   });
   socket.on('disconnect', function (){
+    console.log("disconnect!!");
   });
 });
 

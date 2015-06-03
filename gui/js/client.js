@@ -16,6 +16,26 @@ app.controller('FileList', function($scope){
 
 var man = null;
 
+function shutdown()
+{
+    if(!window.confirm("Do you really want to shutdown ?")){
+		return;
+	}
+
+    man.RPC("command", {command:"shutdown -h now"}, function(res){
+        console.log(res);
+    });
+}
+
+
+function command(command)
+{
+    man.RPC("command", {command:command}, function(res){
+        console.log(res);
+    });
+}
+
+
 function save_online()
 {
 	man.RPC("save", {name:$("#file_name").val(), content:$("#score_code").val()}, function(res){
@@ -136,7 +156,7 @@ function loadlist()
 
 var cnt = 0;
 $("document").ready(function(){
-	man = new RPCManager("192.168.11.7:8081");
+	man = new RPCManager(location.host);
 	loadlist();
 
     man.onNotification("p", function(data){

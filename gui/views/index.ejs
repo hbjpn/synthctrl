@@ -35,7 +35,19 @@ class="icon-bar"></span>
 <div class="collapse navbar-collapse"
 id="bs-example-navbar-collapse-1">
 <ul class="nav navbar-nav navbar-right">
-<li><a href="about.html" target="_blank">About</a></li>
+<li class="dropdown">
+<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Control <span class="caret"></span></a>
+<ul class="dropdown-menu" role="menu">
+<li><a href="#" onclick="shutdown();">Shutdown</a></li>
+<li class="divider"></li>
+<li><a href="#" onclick="command('ifdown wlan0');">down wlan0</a></li>
+<li><a href="#" onclick="command('ifup wlan0');">up wlan0</a></li>
+<li class="divider"></li>
+<li><a href="#" onclick="command('service hostapd stop');">shutdown AP</a></li>
+<li><a href="#" onclick="command('service hostapd start');">start AP</a></li>
+</ul>
+</li>
+
 </ul>
 </div>
 <!-- /.navbar-collapse -->
